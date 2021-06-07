@@ -16,32 +16,35 @@ def weighted_neighbour_avg_discarding_cma(fitness_function , initial_solution, i
 			if(self._previous_generation == None):
 				self._previous_generation = {};
 				for elem in x:
-					self._previous_generation[elem.numpy()] = self._fitness(x);
+					self._previous_generation[tuple(elem.numpy())] = self._fitness(elem).numpy();
+				return tf.convert_to_tensor(list(self._previous_generation.values()));
+
 			else:
 				new_variance = 0;
 				new_generation = {};
-				all_previous_specimen = self._previous_generation.keys();
+				all_previous_specimen = list(self._previous_generation.keys());
 				for elem in x:
-					set = np.array(elem);
-					set.__add__(all_previous_specimen);
+					set = [elem.numpy()];
+					for specimen in all_previous_specimen:
+						set.append(specimen);
 					nbrs = NearestNeighbors(n_neighbors=k).fit(set);
 					distances, neighbours = nbrs.kneighbors();
-					neighbour_indicies = [a[1] for a in neighbours if a[0] == 0];
-					evaluations = [self._previous_generation[set[i]] for i in neighbours];
+					neighbour_indicies = neighbours[0];
+					evaluations = [self._previous_generation[tuple(list(set[i]))] for i in neighbour_indicies];
 					variance = statistics.variance(evaluations);
 
 					if variance > self._avg_previous_variance * v:
-						new_generation[elem.numpy()] = self._fitness(elem);
+						new_generation[tuple(elem.numpy())] = self._fitness(elem).numpy();
 					else:
-						weighted_evals = [evaluations[i] * distances[neighbours.index([0, i])][1] for i in neighbour_indicies];
+						weighted_evals = [evaluations[i] * distances[0][index - 1] for i, index in enumerate(neighbour_indicies)];
 
-						new_generation[elem.numpy()] = sum(weighted_evals) / sum([distances[neighbours.index([0, i])][1] for i in neighbour_indicies])
+						new_generation[tuple(elem.numpy())] = sum(weighted_evals) / sum([distances[0][index - 1] for _, index in enumerate(neighbour_indicies)])
 
 					new_variance += variance;
 
 				self._avg_previous_variance = new_variance / x._shape_as_list()[0];
 				self._previous_generation = new_generation;
-				return tf.convert_to_tensor(new_generation.values());
+				return tf.convert_to_tensor(list(new_generation.values()));
 
 
 
@@ -50,7 +53,7 @@ def weighted_neighbour_avg_discarding_cma(fitness_function , initial_solution, i
 	return CMA(
 		initial_solution,
 		initial_step_size,
-		real_fitness_function);
+		real_fitness_function());
 
 
 
