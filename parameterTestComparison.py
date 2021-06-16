@@ -62,21 +62,21 @@ a = np.array([ 63.85945269, -14.87061561])
 x = cec.f18(a)
 '''
 
-functions = [(2,cec.f2)]
-dimentions = [2]
 
-runs = 2
-population = 10
-searches = 10
+functions = [(2,cec.f2),(3, cec.f3),(6, cec.f6)]
+dimentions = [2,10,50]
+
+runs = 10
+population = 100
+searches = 100
 stepSize = 1.0
 
-kVals = [5]
-vVal = [1]
-
+kVals = [25]
+vVals = [0.6, 0.8, 1, 1.2, 1.4]
+bestV = 1
 bestK = 7
-bestV = 1.0
 
-testK = True
+testK = False
 testDiscard = False
 
 if testK:
@@ -101,7 +101,7 @@ for kVal in kVals:
 				for run in range(runs):
 					#potrzebny jest ten logger albo cus co pozwoli nam podgladac best w danej iteracji CMA
 					#aktualnie nasze czasami ogarnia ze [100, -100] jest najlepsze ze score=3000 zato CMA zwykle pełza wokół 200????!!! Co jest chyba min w tym rejonie O.o
-					randStart = [0,0] #np.random.uniform(-100, 100, size=d)
+					randStart = np.random.uniform(-100, 100, size=d)
 					cmaes = testFun(
 						f,
 						initial_solution=randStart ,
@@ -114,12 +114,15 @@ for kVal in kVals:
 
 					start_time = time.time()
 					with tf.device('/GPU:0'):
-						solution, fitness = cmaes.search(searches)
-					t = time.time() - start_time
-					sResult.add(Result(solution, f(solution), t))
+						try:
+							solution, fitness = cmaes.search(searches)
+							t = time.time() - start_time
+							sResult.add(Result(solution, f(solution), t))
+						except:
+							print("our fail for: " + str(i) + " | " + str(d))
 
 					def fun(x):
-						return tf.convert_to_tensor([f(point) for point in x.numpy()])
+						return tf.convert_to_tensor([-f(point) for point in x.numpy()])
 
 					#to udowadnia ze fun() zwraca wyniki poprawnie ->(ok. maks)=1>2>3>4 
 					v = fun(tf.convert_to_tensor([[99,-99],[75,-75],[50,-50],[0,0]]))
@@ -133,10 +136,13 @@ for kVal in kVals:
 					)
 					start_time = time.time()
 					with tf.device('/GPU:0'):
-						solution, fitness = cmaes.search(searches)
-					t = time.time() - start_time
-					cmaResult.add(Result(solution, fitness, t))
-					#print("run no." + str(run) + " DONE")
+						try:
+							solution, fitness = cmaes.search(searches)
+							t = time.time() - start_time
+							cmaResult.add(Result(solution, -fitness, t))
+						except:
+							print("our fail for: " + str(i) + " | " + str(d))
+					print("run no." + str(run) + " DONE")
 
 
 				fn = sResult.fileName()
@@ -145,9 +151,9 @@ for kVal in kVals:
 
 
 			
-			#print("function no." + str(i) + " DONE")
+			print("function no." + str(i) + " DONE")
 			fResult.append(dResult)
-	#print("kVal " + str(kVal) + "vVal " + str(vVal) + " DONE")
+	print("kVal " + str(kVal) + "vVal " + str(vVal) + " DONE")
 	results.append(fResult)
 
 pickle.dump(results, open( "results/" + ("discard/" if testDiscard else "weight/") + "all.pickle" , "wb" ) )
@@ -162,20 +168,31 @@ for paramI, paramR in enumerate(results):
 		fTime = 0
 		count = 0
 		for id, dr in enumerate(fr):
-			print("\t\td=" + str(dimentions[id]))
-			our, cmaes = dr
-			fitness1, t1 = our.median()
-			fitness2, t2 = cmaes.median()
-			count +=1
-			print("\t\t\tf=" + str(our.best().fitness) +  "  t=" + str(our.best().time) + "  point=" + str(our.best().solution))
-			print("\t\t\tf=" + str(cmaes.best().fitness) +  "  t=" + str(cmaes.best().fitness) + "  point=" + str(cmaes.best().solution))
-			fFitness += fitness1/fitness2
-			fTime += t1/t2
-			
-		print("\t\tFor function, all dimention median fitness=" + str(fFitness/len(fr)) + " and median time=" + str(fTime/len(fr)))
-		paramFitness += fFitness/len(fr)
-		paramTime += fTime/len(fr)
-	print("\tFor param, all function and dimention median fitness=" + str((paramFitness/len(paramR))) + " and median time=" + str(paramTime/len(paramR)))
+			try:
+				print("\t\td=" + str(dimentions[id]))
+				our, cmaes = dr
+				fitness1, t1 = our.median()
+				fitness2, t2 = cmaes.median()
+				count +=1
+				print("\t\t\tf=" + str(our.best().fitness) +  "  t=" + str(our.best().time)) #+ "  point=" + str(our.best().solution))
+				print("\t\t\tf=" + str(cmaes.best().fitness) +  "  t=" + str(cmaes.best().fitness))# + "  point=" + str(cmaes.best().solution))
+				print("\t\tFor dimention median fitness=" + str(fitness1/fitness2) + " and median time=" + str(t1/t2))
+				fFitness += fitness1/fitness2
+				fTime += t1/t2
+			except:
+				pass
+		
+		try:
+			print("\t\tFor function, all dimention median fitness=" + str(fFitness/len(fr)) + " and median time=" + str(fTime/len(fr)))
+			paramFitness += fFitness/len(fr)
+			paramTime += fTime/len(fr)
+		except:
+			pass
+	try:
+		print("\tFor param, all function and dimention median fitness=" + str((paramFitness/len(paramR))) + " and median time=" + str(paramTime/len(paramR)))
+	except:
+		pass
+	
 
 #bo czasami okno sie samo zamyka :|
 x=0

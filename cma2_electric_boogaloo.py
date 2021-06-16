@@ -18,7 +18,7 @@ def low_variance_neighborhood_average_cma(fitness_function , initial_solution, i
 				self._previous_generation = [];
 				for elem in x:
 					z = elem.numpy()
-					self._previous_generation.append((elem, self._fitness(elem.numpy())));
+					self._previous_generation.append((elem, -self._fitness(elem.numpy())));
 				return tf.convert_to_tensor([p[1] for p in self._previous_generation]);
 
 			else:
@@ -38,7 +38,7 @@ def low_variance_neighborhood_average_cma(fitness_function , initial_solution, i
 						new_generation.append((elem, fit))
 					elif variance > self._avg_previous_variance * v:
 						fit = self._fitness(elem.numpy())
-						new_generation.append((elem, fit));
+						new_generation.append((elem, -fit));
 						temp = list(set)
 						temp.append(elem.numpy());
 						set = np.array(temp)
