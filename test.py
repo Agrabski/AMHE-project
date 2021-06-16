@@ -15,6 +15,9 @@ cma = weighted_neighbour_avg_discarding_cma(
 	k=10,
 	v=1,
 )
+best_solution, best_fitness = cma.search()
+print(best_solution)
+print(best_fitness)
 
 cma2 = low_variance_neighborhood_average_cma(
 	fitness_fn,
@@ -24,9 +27,8 @@ cma2 = low_variance_neighborhood_average_cma(
 	s=1,
 	population_size=100
 )
-best_solution, best_fitness = cma.search()
-best_solution2, best_fitness2 = cma2.search()
-print(best_solution)
-print(best_fitness)
+
+best_solution2, best_fitness2 = cma.search()
+
 print(best_solution2)
 print(best_fitness2)
