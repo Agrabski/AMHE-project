@@ -6,7 +6,7 @@ from sklearn.neighbors import NearestNeighbors;
 import statistics
 import math
 
-def low_variance_neighborhood_average_cma(fitness_function , initial_solution, initial_step_size, populationSize, enforceBounds, k, v):
+def low_variance_neighborhood_average_cma(fitness_function , initial_solution, initial_step_size, populationSize, enforceBounds, k, v, logger):
 	class real_fitness_function:
 		def __init__(self):
 			self._fitness = fitness_function;
@@ -53,7 +53,7 @@ def low_variance_neighborhood_average_cma(fitness_function , initial_solution, i
 				self._avg_previous_variance = new_variance / x._shape_as_list()[0];
 				self._previous_generation = new_generation
 				j = [p[1] for p in new_generation]
-				
+				logger(min([p[1] for p in new_generation]))
 				return tf.convert_to_tensor([p[1] for p in new_generation]);
 
 

@@ -102,6 +102,8 @@ for kVal in kVals:
 					#potrzebny jest ten logger albo cus co pozwoli nam podgladac best w danej iteracji CMA
 					#aktualnie nasze czasami ogarnia ze [100, -100] jest najlepsze ze score=3000 zato CMA zwykle pełza wokół 200????!!! Co jest chyba min w tym rejonie O.o
 					randStart = [0,0] #np.random.uniform(-100, 100, size=d)
+					def log(fitness):
+						print(fitness)
 					cmaes = testFun(
 						f,
 						initial_solution=randStart ,
@@ -110,6 +112,7 @@ for kVal in kVals:
 						enforceBounds = np.repeat(np.array([[-100,100]]), d, axis= 0),
 						k=kVal,
 						v=vVal,
+						logger = log
 					)		
 
 					start_time = time.time()
