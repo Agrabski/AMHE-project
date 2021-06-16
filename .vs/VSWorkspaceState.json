@@ -1,9 +1,8 @@
 {
   "ExpandedNodes": [
     "",
-    "\\env1",
-    "\\results"
+    "\\env1"
   ],
-  "SelectedNode": "\\DiscardingParameterTest.py",
+  "SelectedNode": "\\parameterTestComparison.py",
   "PreviewInSolutionExplorer": false
 }
