@@ -113,7 +113,7 @@ for kVal in kVals:
 					)		
 
 					start_time = time.time()
-					with tf.device('/CPU:0'):
+					with tf.device('/GPU:0'):
 						solution, fitness = cmaes.search(searches)
 					t = time.time() - start_time
 					sResult.add(Result(solution, f(solution), t))
@@ -132,7 +132,7 @@ for kVal in kVals:
 						enforce_bounds=np.repeat(np.array([[-100,100]]), d, axis= 0)
 					)
 					start_time = time.time()
-					with tf.device('/CPU:0'):
+					with tf.device('/GPU:0'):
 						solution, fitness = cmaes.search(searches)
 					t = time.time() - start_time
 					cmaResult.add(Result(solution, fitness, t))
