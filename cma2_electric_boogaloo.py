@@ -69,7 +69,7 @@ def low_variance_neighborhood_average_cma(fitness_function , initial_solution, i
 
 
 
-def weighted_neighbour_avg_discarding_cma(fitness_function, initial_solution, initial_step_size, enforceBounds, k, v, population_size):
+def weighted_neighbour_avg_discarding_cma(fitness_function, initial_solution, initial_step_size, enforceBounds, k, v, populationSize, logger):
 	class real_fitness_function:
 		def __init__(self):
 			self._fitness = fitness_function;
@@ -77,41 +77,39 @@ def weighted_neighbour_avg_discarding_cma(fitness_function, initial_solution, in
 
 		def __call__(self, x: Tensor) -> Tensor:
 			if(self._previous_generation == None):
-				self._previous_generation = {};
+				self._previous_generation = [];
 				for elem in x:
-					self._previous_generation[tuple(elem.numpy())] = self._fitness(elem).numpy();
-				return tf.convert_to_tensor(list(self._previous_generation.values()));
+					z = elem.numpy()
+					self._previous_generation.append((elem, self._fitness(elem.numpy())));
+				return tf.convert_to_tensor([p[1] for p in self._previous_generation]);
 
 			else:
-				previous_median = statistics.median(list(self._previous_generation.values()))
-				new_generation = {};
-				all_previous_specimen = list(self._previous_generation.keys());
+				previous_median = statistics.median([p[1] for p in self._previous_generation]);
+				new_generation = [];
+				set = [p[0].numpy() for p in self._previous_generation]
+				setFits = [p[1] for p in self._previous_generation]
 				for elem in x:
-					set = [elem.numpy()];
-					for specimen in all_previous_specimen:
-						set.append(specimen);
 					nbrs = NearestNeighbors(n_neighbors=k).fit(set);
-					distances, neighbours = nbrs.kneighbors();
+					distances, neighbours = nbrs.kneighbors([elem.numpy()]);
 					neighbour_indicies = neighbours[0];
-					neighbour_indicies = [index for index in neighbour_indicies if tuple(elem.numpy()) != set[index]]
-
-					weighted_evals = [self._previous_generation[tuple(list(set[index]))] * distances[0][i - 1] for i, index in enumerate(neighbour_indicies)];
+					weighted_evals = [setFits[i] * distances[0][index] for index, i in enumerate(neighbour_indicies)];
 					weighted_evals = [e for e in weighted_evals if np.isfinite(e)]
 					weighted_avg_eval = sum(weighted_evals) / sum([distances[0][i] for i, index in enumerate(neighbour_indicies)]);
 					if weighted_avg_eval > previous_median * v:
-						new_generation[tuple(elem.numpy())] = self._fitness(elem).numpy();
+						new_generation.append((tuple(elem.numpy()), self._fitness(elem)));
 					else:
-						new_generation[tuple(elem.numpy())] = float('-inf');
+						new_generation.append((tuple(elem.numpy()), float('-inf')));
 
 
-				result = tf.convert_to_tensor(list(new_generation.values()));
 				self._previous_generation = new_generation;
-				return result;
+				logger(min([p[1] for p in new_generation]))
+				return tf.convert_to_tensor([p[1] for p in new_generation], dtype=tf.float32);
+
 	
 	return CMA(
 		initial_solution,
 		initial_step_size,
 		real_fitness_function(),
-		population_size=population_size,
+		population_size=populationSize,
 		enforce_bounds = enforceBounds);
 	
